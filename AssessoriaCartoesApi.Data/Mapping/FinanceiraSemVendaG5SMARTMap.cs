@@ -10,28 +10,27 @@ namespace AssessoriaCartoesApi.Data.Mapping
         {
             builder.HasKey(t => t.Id);
 
-            builder.Property(t => t.Coluna1);
-            builder.Property(t => t.Coluna2);
-            builder.Property(t => t.Coluna3);
-            builder.Property(t => t.Coluna4);
-            builder.Property(t => t.Coluna5);
-            builder.Property(t => t.Coluna6);
-            builder.Property(t => t.Coluna7);
-            builder.Property(t => t.Coluna8);
-            builder.Property(t => t.Coluna9);
-            builder.Property(t => t.Coluna10);
-            builder.Property(t => t.Coluna10);
-            builder.Property(t => t.Coluna11);
-            builder.Property(t => t.Coluna12);
-            builder.Property(t => t.Coluna13);
-            builder.Property(t => t.Coluna14);
-            builder.Property(t => t.Coluna15);
-            builder.Property(t => t.Coluna16);
-            builder.Property(t => t.Coluna17);
-            builder.Property(t => t.Coluna18);
-            builder.Property(t => t.Coluna19);
-            builder.Property(t => t.Coluna20);
-            builder.Property(t => t.Coluna21);
+            builder.Property(t => t.Agencia);
+            builder.Property(t => t.BandeiraDoComprovante);
+            builder.Property(t => t.CNPJDoEstabelecimento);
+            builder.Property(t => t.CodigoAgrupadorBancarioResumo);
+            builder.Property(t => t.CodigoDaBandeira);
+            builder.Property(t => t.CodigoDeAdquirente);
+            builder.Property(t => t.CodigoDoBanco);
+            builder.Property(t => t.ContaCorrente);
+            builder.Property(t => t.DataDoCreditoDaParcela);
+            builder.Property(t => t.DataDoResumoRV);
+            builder.Property(t => t.NomeDaAdquirente);
+            builder.Property(t => t.NumeroDaParcela);
+            builder.Property(t => t.NumeroDoResumoRV);
+            builder.Property(t => t.PDVAdquirente);
+            builder.Property(t => t.TipoDeRegistro);
+            builder.Property(t => t.TipoDeVenda);
+            builder.Property(t => t.ValorBrutoDaParcelaResumo);
+            builder.Property(t => t.ValorDescontoDaAntecipacaoResumo);
+            builder.Property(t => t.ValorDescontoDaParcelaResumo);
+            builder.Property(t => t.ValorLiquidoDaParcelaResumo);
+            builder.Property(t => t.ValorPagoParcelaResumo);
         }
     }
 }

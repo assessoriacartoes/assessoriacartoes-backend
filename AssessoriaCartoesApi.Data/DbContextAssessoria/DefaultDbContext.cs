@@ -23,6 +23,10 @@ namespace AssessoriaCartoesApi.Data.DbContextAssessoria
         public DbSet<TransacaoG5SMART> TransacaoG5SMART { get; set; }
         public DbSet<VendaG5SMART> VendaG5SMART { get; set; }
 
+        public DbSet<LogNexxera> LogsNexxera { get; set; }
+        public DbSet<ExecucaoIntegracao> ExecucaoIntegracoes { get; set; }
+        public DbSet<Cliente> Clientes { get; set; }
+
 
         public DbSet<T> GetDbSet<T>() where T : class => Set<T>();
         public bool HasChanges() => ChangeTracker.HasChanges();

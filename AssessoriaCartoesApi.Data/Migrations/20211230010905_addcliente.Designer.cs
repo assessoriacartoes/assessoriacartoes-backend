@@ -3,14 +3,16 @@ using System;
 using AssessoriaCartoesApi.Data.DbContextAssessoria;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace AssessoriaCartoesApi.Data.Migrations
 {
     [DbContext(typeof(DefaultDbContext))]
-    partial class DefaultDbContextModelSnapshot : ModelSnapshot
+    [Migration("20211230010905_addcliente")]
+    partial class addcliente
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -32,9 +34,6 @@ namespace AssessoriaCartoesApi.Data.Migrations
                     b.Property<string>("ExtensaoLogo")
                         .HasColumnType("longtext");
 
-                    b.Property<byte[]>("Img")
-                        .HasColumnType("longblob");
-
                     b.Property<string>("NomeArquivoLogo")
                         .HasColumnType("longtext");
 
@@ -43,9 +42,6 @@ namespace AssessoriaCartoesApi.Data.Migrations
 
                     b.Property<string>("PowerBi")
                         .HasColumnType("longtext");
-
-                    b.Property<int>("TipoDeUsuario")
-                        .HasColumnType("int");
 
                     b.HasKey("Id");
 

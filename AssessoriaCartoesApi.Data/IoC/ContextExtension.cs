@@ -9,8 +9,7 @@ namespace AssessoriaCartoesApi.Data.IoC
     {
         public static IServiceCollection RegisterContexts(this IServiceCollection services, AssessoriaSettings appSettings)
         {
-            services.AddDbContext<DefaultDbContext>(options => options.UseNpgsql(appSettings.ConnectionString,
-                x => x.MigrationsAssembly("AssessoriaCartoesApi.Data")));
+            services.AddDbContext<DefaultDbContext>(options => options.UseMySql(appSettings.ConnectionString, ServerVersion.AutoDetect(appSettings.ConnectionString)));
 
             return services;
         }

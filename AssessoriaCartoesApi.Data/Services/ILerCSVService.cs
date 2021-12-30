@@ -1,9 +1,10 @@
 ﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace AssessoriaCartoesApi.Data.Services
 {
     public interface ILerCSVService
     {
-        void Executar(List<string> dados, string caixaPostal);
+        Task Executar(List<string> dados, string filename, string caixaPostal);
     }
 }

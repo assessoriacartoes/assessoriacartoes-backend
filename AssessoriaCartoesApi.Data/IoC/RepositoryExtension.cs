@@ -1,4 +1,5 @@
-﻿using AssessoriaCartoesApi.Data.Repositorios.Base;
+﻿using AssessoriaCartoesApi.Data.Repositorios;
+using AssessoriaCartoesApi.Data.Repositorios.Base;
 using AssessoriaCartoesApi.Data.Repositorios.EASSESSORIA;
 using AssessoriaCartoesApi.Data.Repositorios.G5SMART;
 using AssessoriaCartoesApi.Data.Repositorios.interfaces;
@@ -24,6 +25,10 @@ namespace AssessoriaCartoesApi.Data.IoC
             services.AddScoped<IFinanceiroG5SMARTRepository, FinanceiroG5SMARTRepository>();
             services.AddScoped<ITransacaoG5SMARTRepository, TransacaoG5SMARTRepository>();
             services.AddScoped<IVendaG5SMARTRepository, VendaG5SMARTRepository>();
+            
+            services.AddScoped<ILogRepository, LogRepository>();
+            services.AddScoped<IExecucaoIntegracaoRepository, ExecucaoIntegracaoRepository>();
+            services.AddScoped<IClienteRepository, ClienteRepository>();
 
             services.AddScoped<IUnitOfWork, UnitOfWork>();
 

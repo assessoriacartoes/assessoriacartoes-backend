@@ -1,4 +1,8 @@
-﻿using Newtonsoft.Json;
+﻿using AssessoriaCartoesApi.Data.Entities;
+using AssessoriaCartoesApi.Data.Repositorios.Base;
+using AssessoriaCartoesApi.Data.Repositorios.interfaces;
+using Hangfire;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -11,42 +15,59 @@ namespace AssessoriaCartoesApi.Data.Services
     public class NexxeraClient : INexxeraClient
     {
         List<ConnectApi> CHAVES_APIS = new()
-        { 
+        {
             new ConnectApi { CaixaPostal = "EASSESSORIA", ChaveApi = "RUFTU0VTU09SSUEuRUFTU0VTU09SSUE6ZWY4MGIxNmQtN2IyOC00MmUyLWE1MmEtNzlhOTMyZjc4NzJj==" },
-            new ConnectApi { CaixaPostal = "G5SMART", ChaveApi =  "RzVTTUFSVC5HNVNNQVJUOjNkZGRlMGYyLTk1ZTgtNGQ4NS1iZWViLTE3OGQ1NmM1ZDNiNA==" }
+            new ConnectApi { CaixaPostal = "G5SMART", ChaveApi = "RzVTTUFSVC5HNVNNQVJUOjNkZGRlMGYyLTk1ZTgtNGQ4NS1iZWViLTE3OGQ1NmM1ZDNiNA==" }
         };
 
-        List<string> teste = new();
+        List<LogNexxera> _logsNexxera = new();
+
+        private readonly IUnitOfWork _unitOfWork;
 
         private readonly ILerCSVService _lerCSVService;
+        private readonly ILogRepository _logRepository;
+        private readonly IExecucaoIntegracaoRepository _execucaoIntegracaoRepository;
 
-        public NexxeraClient(ILerCSVService lerCSVService)
+        public NexxeraClient(ILerCSVService lerCSVService, ILogRepository logRepository, IUnitOfWork unitOfWork, IExecucaoIntegracaoRepository execucaoIntegracaoRepository)
         {
             _lerCSVService = lerCSVService;
+            _logRepository = logRepository;
+            _unitOfWork = unitOfWork;
+            _execucaoIntegracaoRepository = execucaoIntegracaoRepository;
         }
 
-        public Task Execute()
+        [MaximumConcurrentExecutions(1)]
+        public async Task Execute()
         {
-            foreach (var chave in CHAVES_APIS)
+            var servicoFoiExecutadoHoje = await _execucaoIntegracaoRepository.GetByDateExecucao(DateTime.Now);
+            if (!servicoFoiExecutadoHoje)
             {
-                var arquivos = BuscarArquivosDisponiveis(DateTime.Now.ToString("dd-MM-yyyy"), DateTime.Now.ToString("dd-MM-yyyy"), chave.ChaveApi);
-
-                foreach (var arquivo in arquivos.Result)
+                foreach (var chave in CHAVES_APIS)
                 {
-                    var arquivoToProccess = new List<string>();
+                    var arquivos = BuscarArquivosDisponiveis(DateTime.Now.ToString("dd-MM-yyyy"), DateTime.Now.ToString("dd-MM-yyyy"), chave.ChaveApi);
 
-                    var arquivoToDownload = ColocarArquivosParaDownload(arquivo, chave.ChaveApi);
-
-                    if (arquivoToDownload != default)
+                    if (arquivos != default)
                     {
-                        arquivoToProccess = Download(arquivoToDownload);
-                        if (arquivoToProccess != default && arquivoToProccess.Any())
-                            _lerCSVService.Executar(arquivoToProccess, chave.CaixaPostal);
+                        foreach (var arquivo in arquivos.Result)
+                        {
+                            var arquivoToProccess = new List<string>();
+
+                            var arquivoToDownload = ColocarArquivosParaDownload(arquivo, chave.ChaveApi);
+
+                            if (arquivoToDownload != default)
+                            {
+                                arquivoToProccess = Download(arquivoToDownload);
+                                if (arquivoToProccess != default && arquivoToProccess.Any())
+                                    await _lerCSVService.Executar(arquivoToProccess, arquivoToDownload.Filename, chave.CaixaPostal);
+                            }
+                        }
                     }
                 }
-            }
 
-            return Task.CompletedTask;
+                await SalvarLogs();
+                await _execucaoIntegracaoRepository.CreateAsync(new ExecucaoIntegracao { DataExecucaoFinalizada = DateTime.Now });
+                await _unitOfWork.CommitAsync();
+            }
         }
 
         public ResultRequest BuscarArquivosDisponiveis(string dataInicio, string dataFim, string chaveApi)
@@ -69,7 +90,16 @@ namespace AssessoriaCartoesApi.Data.Services
             }
             catch (Exception ex)
             {
-                throw ex;
+                _logsNexxera.Add(new LogNexxera
+                {
+                    Exception = ex.Message,
+                    Filename = string.Empty,
+                    Method = "BuscarArquivosDisponiveis",
+                    InnerException = ex?.InnerException?.Message,
+                    CreateDate = DateTime.Now
+                });
+
+                return null;
             }
         }
 
@@ -96,12 +126,23 @@ namespace AssessoriaCartoesApi.Data.Services
                 using (var streamReader = new StreamReader(httpResponse.GetResponseStream()))
                 {
                     var result = streamReader.ReadToEnd();
-                    return JsonConvert.DeserializeObject<ArquivoDownload>(result);
+                    var response = JsonConvert.DeserializeObject<ArquivoDownload>(result);
+                    response.Filename = arquivo.Filename;
+                    return response;
                 }
             }
             catch (Exception ex)
             {
-                throw ex;
+                _logsNexxera.Add(new LogNexxera
+                {
+                    Exception = ex.Message,
+                    Filename = arquivo.Filename,
+                    Method = "ColocarArquivosParaDownload",
+                    InnerException = ex?.InnerException?.Message,
+                    CreateDate = DateTime.Now
+                });
+
+                return null;
             }
         }
 
@@ -111,23 +152,39 @@ namespace AssessoriaCartoesApi.Data.Services
             {
                 var httpRequest = (HttpWebRequest)WebRequest.Create(arquivo.Url);
 
-                teste.Add(arquivo.Method);
-
                 httpRequest.ContentType = "application/json";
 
                 var httpResponse = (HttpWebResponse)httpRequest.GetResponse();
                 using (var streamReader = new StreamReader(httpResponse.GetResponseStream()))
                 {
-                    var teste = streamReader.ReadToEnd();
-                    var gg = teste.Split("\n");
-                    return gg.Where(e => !string.IsNullOrEmpty(e)).ToList();
+                    var result = streamReader.ReadToEnd();
+                    var resultFormatted = result.Split("\n");
+                    return resultFormatted.Where(e => !string.IsNullOrEmpty(e)).ToList();
                 }
             }
             catch (Exception ex)
             {
+                _logsNexxera.Add(new LogNexxera
+                {
+                    Exception = ex.Message,
+                    Filename = arquivo.Filename,
+                    Method = "Download",
+                    InnerException = ex?.InnerException?.Message,
+                    CreateDate = DateTime.Now
+                });
+
                 return new List<string>();
-                //throw ex;
             }
+        }
+
+        private async Task SalvarLogs()
+        {
+            foreach (var item in _logsNexxera)
+            {
+                await _logRepository.CreateAsync(item);
+            }
+
+            await _unitOfWork.CommitAsync();
         }
     }
 
@@ -137,6 +194,7 @@ namespace AssessoriaCartoesApi.Data.Services
         public int Limit { get; set; }
         public string Method { get; set; }
         public string Url { get; set; }
+        public string Filename { get; set; }
     }
 
     public class Arquivos

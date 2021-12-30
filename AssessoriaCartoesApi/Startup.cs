@@ -2,7 +2,7 @@ using AssessoriaCartoesApi.Data.IoC;
 using AssessoriaCartoesApi.Data.Services;
 using AssessoriaCartoesApi.Settings;
 using Hangfire;
-using Hangfire.PostgreSql;
+using MySqlConnector;
 using HangfireBasicAuthenticationFilter;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -10,7 +10,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
-using System;
+using Hangfire.MySql;
+using Hangfire.MySql.Core;
 
 namespace AssessoriaCartoesApi
 {
@@ -29,7 +30,7 @@ namespace AssessoriaCartoesApi
             services.Configure<AssessoriaSettings>(appSettingsSection);
             var appSettings = appSettingsSection.Get<AssessoriaSettings>();
 
-            services.AddHangfire(x => x.UsePostgreSqlStorage(appSettings.ConnectionString));
+            services.AddHangfire(x => x.UseStorage(new MySqlStorage(appSettings.ConnectionString)));
 
             services.RegisterContexts(appSettings);
             services.RegisterRepositories();
@@ -40,6 +41,17 @@ namespace AssessoriaCartoesApi
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "AssessoriaCartoesApi", Version = "v1" });
+            });
+
+            services.AddCors(options =>
+            {
+                options.AddDefaultPolicy(
+                    builder =>
+                    {
+                        builder.AllowAnyOrigin()
+                               .AllowAnyHeader()
+                               .AllowAnyMethod();
+                    });
             });
         }
 
@@ -63,13 +75,15 @@ namespace AssessoriaCartoesApi
                     }
                 },
             });
-            
-            app.UseHangfireServer();
 
-            RecurringJob.AddOrUpdate<NexxeraClient>(x => x.Execute(), Cron.MinuteInterval(1));
+            var options = new BackgroundJobServerOptions { WorkerCount = 1 };
+            app.UseHangfireServer(options);
+
+            RecurringJob.AddOrUpdate<NexxeraClient>(x => x.Execute(), "0 14 * * *");
 
             app.UseRouting();
             app.UseAuthorization();
+            app.UseCors();
 
             app.UseEndpoints(endpoints =>
             {

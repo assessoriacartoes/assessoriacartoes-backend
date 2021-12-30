@@ -3,54 +3,21 @@ using System;
 using AssessoriaCartoesApi.Data.DbContextAssessoria;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace AssessoriaCartoesApi.Data.Migrations
 {
     [DbContext(typeof(DefaultDbContext))]
-    partial class DefaultDbContextModelSnapshot : ModelSnapshot
+    [Migration("20211228163743_initial")]
+    partial class initial
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("Relational:MaxIdentifierLength", 64)
                 .HasAnnotation("ProductVersion", "5.0.13");
-
-            modelBuilder.Entity("AssessoriaCartoesApi.Data.Entities.Cliente", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    b.Property<string>("Conciliador")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("Email")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("ExtensaoLogo")
-                        .HasColumnType("longtext");
-
-                    b.Property<byte[]>("Img")
-                        .HasColumnType("longblob");
-
-                    b.Property<string>("NomeArquivoLogo")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("Password")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("PowerBi")
-                        .HasColumnType("longtext");
-
-                    b.Property<int>("TipoDeUsuario")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Clientes");
-                });
 
             modelBuilder.Entity("AssessoriaCartoesApi.Data.Entities.EASSESSORIA.AjusteEASSESSORIA", b =>
                 {
